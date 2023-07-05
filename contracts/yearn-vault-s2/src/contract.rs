@@ -11,13 +11,13 @@ use base_contract::{
     ContractInfo, VaultContract, VaultInstantiateMsg, CONTRACT_INFO, VaultContractMethods,
 };
 
-pub struct Wrapper(pub VaultContract);
+pub struct VaultContractWrapper(pub VaultContract);
 
-// impl VaultContractMethods for Wrapper {
-//     fn strategies(&self, _deps: DepsMut, _env: Env, _info: MessageInfo) -> StdResult<Response> {
-//         unimplemented!()
-//     }
-// }
+impl VaultContractMethods for VaultContractWrapper {
+    fn strategies(&self, _deps: DepsMut, _env: Env, _info: MessageInfo) -> StdResult<Response> {
+        unimplemented!();
+    }
+}
 
 /// version info for migration info
 const CONTRACT_NAME: &str = "crates.io:yearn-vault-s2";

@@ -28,68 +28,90 @@ pub struct VaultContract {}
 pub const CONTRACT_INFO: Item<ContractInfo> = Item::new("contract_info");
 pub const VTOKEN_ADDRESS: Item<String> = Item::new("vtoken_address");
 
-
-
 pub trait VaultContractMethods {
     // Cosmwasm End point message function
     fn instantiate(
         &self,
-        deps: DepsMut,
-        env: Env,
-        info: MessageInfo,
-        msg: VaultInstantiateMsg,
-    ) -> StdResult<Response>;
+        _deps: DepsMut,
+        _env: Env,
+        _info: MessageInfo,
+        _msg: VaultInstantiateMsg,
+    ) -> StdResult<Response> {
+        unimplemented!();
+    }
 
     // Cosmwasm Execute msg function
     fn handle_cw20_receive(
         &self,
-        deps: DepsMut,
-        env: Env,
-        info: MessageInfo,
-        msg: Cw20ReceiveMsg,
-    ) -> StdResult<Response>;
-    fn strategies(&self, deps: DepsMut, env: Env, info: MessageInfo) -> StdResult<Response>;
+        _deps: DepsMut,
+        _env: Env,
+        _info: MessageInfo,
+        _msg: Cw20ReceiveMsg,
+    ) -> StdResult<Response> {
+        unimplemented!();
+    }
+
+    fn strategies(&self, _deps: DepsMut, _env: Env, _info: MessageInfo) -> StdResult<Response> {
+        unimplemented!();
+    }
 
     // Extra function for deposit
-    fn before_deposit(&self, deps: DepsMut, env: Env, info: MessageInfo) -> StdResult<Response>;
-    fn after_deposit(&self, deps: DepsMut, env: Env, info: MessageInfo) -> StdResult<Response>;
+    fn before_deposit(&self, _deps: DepsMut, _env: Env, _info: MessageInfo) -> StdResult<Response> {
+        unimplemented!();
+    }
+
+    fn after_deposit(&self, _deps: DepsMut, _env: Env, _info: MessageInfo) -> StdResult<Response> {
+        unimplemented!();
+    }
 
     // Extra function for withdraw
-    fn before_withdraw(&self, deps: DepsMut, env: Env, info: MessageInfo) -> StdResult<Response>;
-    fn after_withdraw(&self, deps: DepsMut, env: Env, info: MessageInfo) -> StdResult<Response>;
+    fn before_withdraw(&self, _deps: DepsMut, _env: Env, _info: MessageInfo) -> StdResult<Response> {
+        unimplemented!();
+    }
+
+    fn after_withdraw(&self, _deps: DepsMut, _env: Env, _info: MessageInfo) -> StdResult<Response> {
+        unimplemented!();
+    }
 
     // Cosmwasm Query msg function
-    fn get_total_balance(&self, deps: Deps, env: Env) -> Result<TotalBalanceResponse, ContractError>;
-    fn get_total_supply(&self, deps: Deps, env: Env) -> Result<TotalVtokenResponse, ContractError>;
+    fn get_total_balance(&self, _deps: Deps, _env: Env) -> Result<TotalBalanceResponse, ContractError> {
+        unimplemented!();
+    }
+
+    fn get_total_supply(&self, _deps: Deps, _env: Env) -> Result<TotalVtokenResponse, ContractError> {
+        unimplemented!();
+    }
 
     // Cosmwasm Reply msg function
-    fn handle_cw20_instantiate(&self, deps: DepsMut, msg: Reply) -> StdResult<Response>;
+    fn handle_cw20_instantiate(&self, _deps: DepsMut, _msg: Reply) -> StdResult<Response> {
+        unimplemented!();
+    }
 }
 
 impl VaultContractMethods for VaultContract {
     fn instantiate(
         &self,
-        deps: DepsMut,
-        env: Env,
+        _deps: DepsMut,
+        _env: Env,
         _info: MessageInfo,
-        msg: VaultInstantiateMsg,
+        _msg: VaultInstantiateMsg,
     ) -> StdResult<Response> {
         
         let info = ContractInfo {
-            contract_owner: msg.vault_owner,
-            supported_token: msg.supported_token.clone(),
+            contract_owner: _msg.vault_owner,
+            supported_token: _msg.supported_token.clone(),
         };
 
-        CONTRACT_INFO.save(deps.storage, &info)?;
+        CONTRACT_INFO.save(_deps.storage, &info)?;
 
         let supported_token_query = WasmQuery::Smart {
-            contract_addr: msg.supported_token.clone(),
+            contract_addr: _msg.supported_token.clone(),
             msg: to_binary(&TokenInfo {})?,
         };
 
-        let supported_token_data: StdResult<TokenInfoResponse> = deps
+        let supported_token_data: StdResult<TokenInfoResponse> = _deps
             .querier
-            .query_wasm_smart(msg.supported_token, &supported_token_query);
+            .query_wasm_smart(_msg.supported_token, &supported_token_query);
 
         match supported_token_data {
             Ok(token_data) => {
@@ -104,7 +126,7 @@ impl VaultContractMethods for VaultContract {
                         decimals: 18,
                         initial_balances: vec![],
                         mint: Some(MinterResponse {
-                            minter: env.contract.address.to_string(),
+                            minter: _env.contract.address.to_string(),
                             cap: None,
                         }),
                         marketing: None,
@@ -128,19 +150,19 @@ impl VaultContractMethods for VaultContract {
 
     fn handle_cw20_receive(
         &self,
-        deps: DepsMut,
-        env: Env,
+        _deps: DepsMut,
+        _env: Env,
         _info: MessageInfo,
-        msg: Cw20ReceiveMsg,
+        _msg: Cw20ReceiveMsg,
     ) -> StdResult<Response> {
         const DEPOSIT_MESSAGE: &str = "Deposit";
         const WITHDRAW_MESSAGE: &str = "Withdraw";
 
-        let _send_cw20: SendCw20Msg = from_binary(&msg.msg)?;
+        let _send_cw20: SendCw20Msg = from_binary(&_msg.msg)?;
 
         match _send_cw20.message.as_str() {
             DEPOSIT_MESSAGE => {
-                let token_address = match CONTRACT_INFO.load(deps.storage) {
+                let token_address = match CONTRACT_INFO.load(_deps.storage) {
                     Ok(response) => response.supported_token,
                     Err(_) => {
                         return Err(StdError::GenericErr {
@@ -157,7 +179,7 @@ impl VaultContractMethods for VaultContract {
 
                 let mint_amount: Uint128;
 
-                let total_supply = match self.get_total_supply(deps.as_ref(), env.clone()) {
+                let total_supply = match self.get_total_supply(_deps.as_ref(), _env.clone()) {
                     Ok(response) => response.total_supply,
                     Err(_) => {
                         return Err(StdError::GenericErr {
@@ -167,15 +189,15 @@ impl VaultContractMethods for VaultContract {
                 };
 
                 if total_supply < Uint128::from(1u128) {
-                    mint_amount = msg.amount;
+                    mint_amount = _msg.amount;
                 } else {
-                    let total_balance = self.get_total_balance(deps.as_ref(), env);
+                    let total_balance = self.get_total_balance(_deps.as_ref(), _env);
 
                     match total_balance {
                         Ok(response) => {
                             mint_amount = total_supply
-                                .div(response.balance.sub(msg.amount))
-                                .mul(msg.amount);
+                                .div(response.balance.sub(_msg.amount))
+                                .mul(_msg.amount);
                         }
                         Err(_) => {
                             return Err(StdError::GenericErr {
@@ -185,14 +207,14 @@ impl VaultContractMethods for VaultContract {
                     }
                 }
 
-                let vtoken_address = VTOKEN_ADDRESS.load(deps.storage);
+                let vtoken_address = VTOKEN_ADDRESS.load(_deps.storage);
 
                 match vtoken_address {
                     Ok(address) => {
                         let execute_mint_tx = WasmMsg::Execute {
                             contract_addr: address,
                             msg: to_binary(&cw20::Cw20ExecuteMsg::Mint {
-                                recipient: msg.sender,
+                                recipient: _msg.sender,
                                 amount: mint_amount,
                             })?,
                             funds: vec![],
@@ -211,11 +233,11 @@ impl VaultContractMethods for VaultContract {
                 }
             }
             WITHDRAW_MESSAGE => {
-                match VTOKEN_ADDRESS.load(deps.storage) {
+                match VTOKEN_ADDRESS.load(_deps.storage) {
                     Ok(vtoken) => {
                         if vtoken == _send_cw20.address {
                             let total_supply =
-                                match self.get_total_supply(deps.as_ref(), env.clone()) {
+                                match self.get_total_supply(_deps.as_ref(), _env.clone()) {
                                     Ok(response) => response.total_supply,
                                     Err(_) => {
                                         return Err(StdError::GenericErr {
@@ -224,7 +246,7 @@ impl VaultContractMethods for VaultContract {
                                     }
                                 };
 
-                            let total_balance = match self.get_total_balance(deps.as_ref(), env) {
+                            let total_balance = match self.get_total_balance(_deps.as_ref(), _env) {
                                 Ok(response) => response.balance,
                                 Err(_) => {
                                     return Err(StdError::GenericErr {
@@ -233,9 +255,9 @@ impl VaultContractMethods for VaultContract {
                                 }
                             };
 
-                            let transfer_amount = total_balance.div(total_supply).mul(msg.amount);
+                            let transfer_amount = total_balance.div(total_supply).mul(_msg.amount);
 
-                            let token_address = match CONTRACT_INFO.load(deps.storage) {
+                            let token_address = match CONTRACT_INFO.load(_deps.storage) {
                                 Ok(response) => response.supported_token,
                                 Err(_) => {
                                     return Err(StdError::GenericErr {
@@ -247,7 +269,7 @@ impl VaultContractMethods for VaultContract {
                             let execute_mint_tx = WasmMsg::Execute {
                                 contract_addr: token_address,
                                 msg: to_binary(&cw20::Cw20ExecuteMsg::Transfer {
-                                    recipient: msg.sender,
+                                    recipient: _msg.sender,
                                     amount: transfer_amount,
                                 })?,
                                 funds: vec![],
@@ -275,45 +297,20 @@ impl VaultContractMethods for VaultContract {
         Ok(Response::new().add_attribute("method", "handle_cw20_receive"))
     }
 
-    fn strategies(&self, _deps: DepsMut, _env: Env, _info: MessageInfo) -> StdResult<Response> {
-        unimplemented!()
-    }
-
-    fn before_deposit(&self, _deps: DepsMut, _env: Env, _info: MessageInfo) -> StdResult<Response> {
-        unimplemented!()
-    }
-
-    fn after_deposit(&self, _deps: DepsMut, _env: Env, _info: MessageInfo) -> StdResult<Response> {
-        unimplemented!()
-    }
-
-    fn before_withdraw(
-        &self,
-        _deps: DepsMut,
-        _env: Env,
-        _info: MessageInfo,
-    ) -> StdResult<Response> {
-        unimplemented!()
-    }
-
-    fn after_withdraw(&self, _deps: DepsMut, _env: Env, _info: MessageInfo) -> StdResult<Response> {
-        unimplemented!()
-    }
-
-    fn get_total_balance(&self, deps: Deps, env: Env) -> Result<TotalBalanceResponse, ContractError> {
+    fn get_total_balance(&self, _deps: Deps, _env: Env) -> Result<TotalBalanceResponse, ContractError> {
         let total_balance: Uint128;
-        let token_address = CONTRACT_INFO.load(deps.storage);
+        let token_address = CONTRACT_INFO.load(_deps.storage);
 
         match token_address {
             Ok(response) => {
                 let query = WasmQuery::Smart {
                     contract_addr: response.supported_token.clone(),
                     msg: to_binary(&Balance {
-                        address: env.contract.address.to_string(),
+                        address: _env.contract.address.to_string(),
                     })?,
                 };
 
-                let data: StdResult<BalanceResponse> = deps
+                let data: StdResult<BalanceResponse> = _deps
                     .querier
                     .query_wasm_smart(response.supported_token, &query);
 
@@ -336,8 +333,8 @@ impl VaultContractMethods for VaultContract {
         })
     }
 
-    fn get_total_supply(&self, deps: Deps, _env: Env) -> Result<TotalVtokenResponse, ContractError> {
-        let vtoken_address = VTOKEN_ADDRESS.load(deps.storage);
+    fn get_total_supply(&self, _deps: Deps, _env: Env) -> Result<TotalVtokenResponse, ContractError> {
+        let vtoken_address = VTOKEN_ADDRESS.load(_deps.storage);
 
         match vtoken_address {
             Ok(address) => {
@@ -347,7 +344,7 @@ impl VaultContractMethods for VaultContract {
                 };
 
                 let vtoken_data: StdResult<TokenInfoResponse> =
-                    deps.querier.query_wasm_smart(address, &query);
+                    _deps.querier.query_wasm_smart(address, &query);
 
                 match vtoken_data {
                     Ok(token) => Ok(TotalVtokenResponse {
@@ -364,12 +361,12 @@ impl VaultContractMethods for VaultContract {
         }
     }
 
-    fn handle_cw20_instantiate(&self, deps: DepsMut, msg: Reply) -> StdResult<Response> {
-        let result = parse_reply_instantiate_data(msg);
+    fn handle_cw20_instantiate(&self, _deps: DepsMut, _msg: Reply) -> StdResult<Response> {
+        let result = parse_reply_instantiate_data(_msg);
 
         match result {
             Ok(response) => {
-                VTOKEN_ADDRESS.save(deps.storage, &response.contract_address)?;
+                VTOKEN_ADDRESS.save(_deps.storage, &response.contract_address)?;
                 Ok(Response::new().add_attribute("method", "handle_cw20_instantiate"))
             },
             Err(_) => {
