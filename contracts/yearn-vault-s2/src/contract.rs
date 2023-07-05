@@ -1,8 +1,7 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
-use cosmwasm_std::{Binary, Deps, DepsMut, Env, MessageInfo, Reply, Response, StdResult, to_binary, StdError};
+use cosmwasm_std::{Binary, Deps, DepsMut, Env, MessageInfo, Reply, Response, StdResult, to_binary};
 use cw2::set_contract_version;
-use serde::{Serialize, Serializer};
 
 use crate::error::ContractError;
 use crate::msg::{ExecuteMsg, InstantiateMsg, QueryMsg};
@@ -15,7 +14,7 @@ pub struct VaultContractWrapper(pub VaultContract);
 
 impl VaultContractMethods for VaultContractWrapper {
     fn strategies(&self, _deps: DepsMut, _env: Env, _info: MessageInfo) -> StdResult<Response> {
-        unimplemented!();
+        Ok(Response::new().add_attribute("method", "stategies"))
     }
 }
 
@@ -71,12 +70,14 @@ pub fn execute(
     _info: MessageInfo,
     _msg: ExecuteMsg,
 ) -> StdResult<Response> {
-
     let contract = VaultContract {};
 
     match _msg {
         ExecuteMsg::Receive(cw20_receive_msg) => contract.handle_cw20_receive(_deps, _env, _info, cw20_receive_msg),
-        ExecuteMsg::Strategies {} => contract.strategies(_deps, _env, _info)
+        ExecuteMsg::Strategies {} => {
+            let wrapper_contract = VaultContractWrapper(contract);
+            wrapper_contract.strategies(_deps, _env, _info)
+        }
     }
 }
 
