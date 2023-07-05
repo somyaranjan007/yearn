@@ -1,0 +1,4 @@
+name = "yearn"
+
+[wasm]
+optimizer_version = '0.12.13'
