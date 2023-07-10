@@ -71,9 +71,9 @@ pub mod execute {
         match vault_record {
             Ok(existed_vault) => {
                 for i in 0..existed_vault.len() {
-                    if existed_vault[i].name != vault_data.name
-                        || existed_vault[i].symbol != vault_data.symbol
-                        || existed_vault[i].vault_address != vault_data.vault_address
+                    if existed_vault[i].name == vault_data.name
+                        || existed_vault[i].symbol == vault_data.symbol
+                        || existed_vault[i].vault_address == vault_data.vault_address
                     {
                         return Err(ContractError::CustomError {
                             val: "vault already existed".to_string(),

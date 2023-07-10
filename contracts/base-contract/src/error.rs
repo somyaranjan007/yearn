@@ -1,6 +1,6 @@
 use cosmwasm_std::StdError;
 use thiserror::Error;
-use serde::{Serialize, Serializer};
+use serde::{de::Error, Serialize, Deserialize, Deserializer, Serializer};
 
 #[derive(Error, Debug)]
 pub enum ContractError {
@@ -23,3 +23,35 @@ impl Serialize for ContractError {
         serializer.serialize_str("ContractError")   
     }
 }
+
+impl<'de> Deserialize<'de> for ContractError {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        struct ContractErrorVisitor;
+
+        impl<'de> serde::de::Visitor<'de> for ContractErrorVisitor {
+            type Value = ContractError;
+
+            fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
+                formatter.write_str("ContractError")
+            }
+
+            fn visit_str<E>(self, value: &str) -> Result<Self::Value, E>
+            where
+                E: serde::de::Error,
+            {
+                if value == "ContractError" {
+                    // Return the desired variant based on the value
+                    Ok(ContractError::Unauthorized {})
+                } else {
+                    Err(serde::de::Error::unknown_variant(value, &["ContractError"]))
+                }
+            }
+        }
+
+        deserializer.deserialize_str(ContractErrorVisitor)
+    }
+}
+

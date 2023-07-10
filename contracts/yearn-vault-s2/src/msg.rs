@@ -5,7 +5,6 @@ use base_contract::{TotalBalanceResponse, TotalVtokenResponse};
 /// Message type for `instantiate` entry_point
 #[cw_serde]
 pub struct InstantiateMsg {
-    pub contract_owner: String,
     pub supported_token: String,
 }
 

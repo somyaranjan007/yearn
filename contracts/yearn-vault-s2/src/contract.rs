@@ -2,9 +2,9 @@
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{Binary, Deps, DepsMut, Env, MessageInfo, Reply, Response, StdResult, to_binary};
 use cw2::set_contract_version;
+// use cw_multi_test::Contract;
 use cw_storage_plus::Item;
 
-use crate::error::ContractError;
 use crate::msg::{ExecuteMsg, InstantiateMsg, QueryMsg};
 use crate::state::{WRAPPER_CONTRACT,VaultContractWrapper };
 
@@ -27,11 +27,11 @@ const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 /// Handling contract instantiation
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
-    deps: DepsMut,
+    mut deps: DepsMut,
     _env: Env,
     info: MessageInfo,
     _msg: InstantiateMsg,
-) -> Result<Response, ContractError> {
+) -> StdResult<Response> {
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
 
 
@@ -40,21 +40,26 @@ pub fn instantiate(
         vault_owner: info.clone().sender.to_string(),
     };
     
-    let contract = VaultContract::default();
-    let mut wrapper_contract = VaultContractWrapper(contract);
+    let contract = VaultContract {
+        contract_info: Item::new("contract_info"), 
+        vtoken_address: Item::new("vtoken_address"),
+    };
 
-    let instantiate = wrapper_contract.instantiate(deps, _env, info, msg);
+    let mut wrapper_contract = VaultContractWrapper(contract);
     
-      
-    match instantiate {
+    // let instantiate_tx = contract.instantiate(deps.branch(), _env, info.clone(), msg);
+    
+    let instantiate_tx = wrapper_contract.instantiate(deps.branch(), _env, info.clone(), msg);
+    
+    match instantiate_tx {
         Ok(_response) => {
-            WRAPPER_CONTRACT.save(deps.storage, &wrapper_contract );
+            WRAPPER_CONTRACT.save(deps.storage, &wrapper_contract )?;
             Ok(Response::new()
                 .add_attribute("method", "instantiate")
                 .add_attribute("owner", info.sender))
         },
-        Err(_) => {
-            return Err(ContractError::CustomError { val: "Contract doesn't instantiate".to_string() })
+        Err(err) => {
+            return Err(err)
         }
     }
 
@@ -86,6 +91,8 @@ pub fn execute(
             return Err(cosmwasm_std::StdError::GenericErr { msg: "contract not found".to_string() });
         }
     }
+
+    
 }
 
 /// Handling contract query
@@ -93,16 +100,18 @@ pub fn execute(
 pub fn query(_deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
     let wrapper_contract = WRAPPER_CONTRACT.load(_deps.storage);
     match wrapper_contract {
-        Ok(contract) => {
+        Ok(mut contract) => {
             match msg {
                 QueryMsg::TotalBalance {  } => to_binary(&contract.get_total_balance(_deps, _env)),
                 QueryMsg::TotalSupply {  } => to_binary(&contract.get_total_supply(_deps, _env)),
             }
         },
         Err(_) => {
-            return  Err(cosmwasm_std::StdError::GenericErr { msg: "contract not found".to });
+            return  Err(cosmwasm_std::StdError::GenericErr { msg: "contract not found".to_string() });
         }
     }
+
+     
 }
 
 /// Handling submessage reply.
@@ -111,7 +120,7 @@ pub fn reply(_deps: DepsMut, _env: Env, _msg: Reply) -> StdResult<Response> {
     const VTOKEN_INSTANTIATE_REPLY_ID: u64 = 1u64;
     let wrapper_contract = WRAPPER_CONTRACT.load(_deps.storage);
     match wrapper_contract {
-        Ok(contract) => {
+        Ok(mut contract) => {
             match _msg.id {
                 VTOKEN_INSTANTIATE_REPLY_ID => contract.handle_cw20_instantiate(_deps, _msg),
                 _id => {
@@ -124,6 +133,6 @@ pub fn reply(_deps: DepsMut, _env: Env, _msg: Reply) -> StdResult<Response> {
             return Err(cosmwasm_std::StdError::GenericErr { msg: "Contract not found".to_string() });
         },
     }
-
+    
 }
 
