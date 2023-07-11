@@ -8,9 +8,9 @@ use serde::{Deserialize, Serialize, Serializer};
 use cw20::{BalanceResponse, MinterResponse, TokenInfoResponse};
 use cw20::Cw20QueryMsg::{Balance, TokenInfo, self};
 
-pub struct VaultContractWrapper<'a>(pub VaultContract<'a>);
+pub struct VaultContractWrapper(pub VaultContract);
 
-impl Serialize for VaultContractWrapper<'static> {
+impl Serialize for VaultContractWrapper {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: Serializer,
@@ -19,21 +19,21 @@ impl Serialize for VaultContractWrapper<'static> {
     }
 }
 
-impl<'de, 'a> Deserialize<'de> for VaultContractWrapper<'a> {
-    fn deserialize<D>(deserializer: D) -> Result<VaultContractWrapper<'static>, D::Error>
+impl<'de, 'a> Deserialize<'de> for VaultContractWrapper {
+    fn deserialize<D>(deserializer: D) -> Result<VaultContractWrapper, D::Error>
     where
         D: Deserializer<'de>,
     {
         struct VaultContractWrapperVisitor;
 
         impl<'de> serde::de::Visitor<'de> for VaultContractWrapperVisitor {
-            type Value = VaultContractWrapper<'static>;
+            type Value = VaultContractWrapper;
 
             fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
                 formatter.write_str("VaultContractWrapper")
             }
 
-            fn visit_str<E>(self, value: &str) -> Result<VaultContractWrapper<'static>, E>
+            fn visit_str<E>(self, value: &str) -> Result<VaultContractWrapper, E>
             where
                 E: serde::de::Error,
             {
@@ -54,7 +54,7 @@ impl<'de, 'a> Deserialize<'de> for VaultContractWrapper<'a> {
 
 
 
-impl<'a> VaultContractMethods for VaultContractWrapper<'a> {
+impl<'a> VaultContractMethods for VaultContractWrapper {
 
     fn strategies(
         &self,
@@ -108,7 +108,7 @@ impl<'a> VaultContractMethods for VaultContractWrapper<'a> {
     ) -> cosmwasm_std::StdResult<Response> {
         let wrapper_contract = WRAPPER_CONTRACT.load(_deps.storage);
         match wrapper_contract {
-            Ok(mut contract) => {
+            Ok(contract) => {
                 let execute_withdraw_tx = WasmMsg::Execute {
                     contract_addr: "osmo1g30recyv8pfy3qd4qn3dn7plc0rn5z68y5gn32j39e96tjhthzxsw3uvvu".to_string(),
                     msg: to_binary(&red_bank::ExecuteMsg::Withdraw {
@@ -147,9 +147,17 @@ impl<'a> VaultContractMethods for VaultContractWrapper<'a> {
         Ok(Response::new())
 
     }
+
+    fn contract_info_state( &mut self) -> &mut Item<'static, ContractInfo> {
+        &mut self.0.contract_info
+    }
+
+    fn vtoken_address_state(&mut self) -> &mut Item<'static, String> {
+        &mut self.0.vtoken_address
+    }
     
 
 
 }
 
-pub const WRAPPER_CONTRACT: Item<VaultContractWrapper<'static>> = Item::new("wrapper_contract");
+pub const WRAPPER_CONTRACT: Item<VaultContractWrapper> = Item::new("wrapper_contract");

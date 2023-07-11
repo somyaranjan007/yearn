@@ -1,6 +1,6 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
-use cosmwasm_std::{Binary, Deps, DepsMut, Env, MessageInfo, Reply, Response, StdResult, to_binary};
+use cosmwasm_std::{Binary, Deps, DepsMut, Env, MessageInfo, Reply, Response, StdResult, to_binary, WasmMsg, SubMsg, Empty};
 use cw2::set_contract_version;
 // use cw_multi_test::Contract;
 use cw_storage_plus::Item;
@@ -9,6 +9,7 @@ use crate::msg::{ExecuteMsg, InstantiateMsg, QueryMsg};
 use crate::state::{WRAPPER_CONTRACT,VaultContractWrapper };
 
 use base_contract::{VaultContract, VaultInstantiateMsg, VaultContractMethods};
+use yearn_factory::msg::{ExecuteMsg as FactoryExecuteMsg, VaultData};
 
 
 // const CONTRACT: VaultContract = VaultContract::new()
@@ -45,18 +46,31 @@ pub fn instantiate(
         vtoken_address: Item::new("vtoken_address"),
     };
 
+
     let mut wrapper_contract = VaultContractWrapper(contract);
-    
+     
     // let instantiate_tx = contract.instantiate(deps.branch(), _env, info.clone(), msg);
     
-    let instantiate_tx = wrapper_contract.instantiate(deps.branch(), _env, info.clone(), msg);
-    
+    let instantiate_tx = wrapper_contract.instantiate(deps.branch(), _env.clone(), info.clone(), msg);
+
     match instantiate_tx {
         Ok(_response) => {
             WRAPPER_CONTRACT.save(deps.storage, &wrapper_contract )?;
+            
+        let factory_ex_txn=WasmMsg::Execute { 
+            contract_addr: "osmo1a4hw32cu85704sarhfu06uysm292f58lh0s2xmj5c0w6458x5szs6sf7zl".to_string(), 
+            msg: to_binary(&FactoryExecuteMsg::RegisterVault(VaultData { 
+                name: "usdc".to_string(), 
+                symbol:"USDC".to_string(), 
+                vault_address: _env.contract.address.to_string(), 
+            }))?, 
+            funds: vec![]
+        };
+            
+            let _sub_message: SubMsg<Empty> = SubMsg::reply_always(factory_ex_txn, 5);
+
             Ok(Response::new()
-                .add_attribute("method", "instantiate")
-                .add_attribute("owner", info.sender))
+                .add_attribute("method", "instantiate"))
         },
         Err(err) => {
             return Err(err)
@@ -102,11 +116,14 @@ pub fn query(_deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match wrapper_contract {
         Ok(mut contract) => {
             match msg {
-                QueryMsg::TotalBalance {  } => to_binary(&contract.get_total_balance(_deps, _env)),
-                QueryMsg::TotalSupply {  } => to_binary(&contract.get_total_supply(_deps, _env)),
+                QueryMsg::TotalBalance {  } => to_binary(&contract.get_total_balance(_deps, _env)?),
+                QueryMsg::TotalSupply {  } => to_binary(&contract.get_total_supply(_deps, _env)?),
+                
             }
+
         },
         Err(_) => {
+            
             return  Err(cosmwasm_std::StdError::GenericErr { msg: "contract not found".to_string() });
         }
     }
@@ -117,7 +134,7 @@ pub fn query(_deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
 /// Handling submessage reply.
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn reply(_deps: DepsMut, _env: Env, _msg: Reply) -> StdResult<Response> {
-    const VTOKEN_INSTANTIATE_REPLY_ID: u64 = 1u64;
+    const VTOKEN_INTSANTIATE_REPLY_ID: u64 = 1u64;
     let wrapper_contract = WRAPPER_CONTRACT.load(_deps.storage);
     match wrapper_contract {
         Ok(mut contract) => {

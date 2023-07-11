@@ -12,7 +12,10 @@ pub enum ContractError {
 
     #[error("Custom Error val: {val:?}")]
     CustomError { val: String },
+
+
 }
+
 
 // we should impliment this to use errors in query
 impl Serialize for ContractError {
@@ -22,3 +25,4 @@ impl Serialize for ContractError {
         serializer.serialize_str("ContractError")   
     }
 }
+

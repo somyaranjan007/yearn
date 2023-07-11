@@ -100,6 +100,8 @@ pub mod execute {
                 let mut new_vault: Vec<Vault> = Vec::new();
                 new_vault.push(vault);
 
+                println!("new_vault: {:?}", new_vault);
+
                 match VAULT_RECORD.save(_deps.storage, &new_vault) {
                     Ok(_) => {}
                     Err(_) => {
@@ -108,6 +110,7 @@ pub mod execute {
                         });
                     }
                 }
+ 
             }
         }
 
@@ -118,7 +121,7 @@ pub mod execute {
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn query(_deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
-        QueryMsg::GetVaults {} => to_binary(&query::get_vault_array(_deps, _env)),
+        QueryMsg::GetVaults {} => to_binary(&query::get_vault_array(_deps, _env)?),
     }
 }
 
@@ -128,23 +131,72 @@ pub mod query {
     pub fn get_vault_array(
         _deps: Deps,
         _env: Env,
-    ) -> Result<GetVaultRecordResponse, ContractError> {
-        let vault_record = VAULT_RECORD.load(_deps.storage);
+    ) -> StdResult<GetVaultRecordResponse> {
+        let vault_record = VAULT_RECORD.load(_deps.storage)?;
 
-        match vault_record {
-            Ok(vaults) => Ok(GetVaultRecordResponse {
-                vault_array: vaults,
-            }),
-            Err(_) => {
-                return Err(ContractError::CustomError {
-                    val: "No vault present".to_string(),
-                });
-            }
-        }
+        println!("vault_record: {:?}", vault_record);
+
+        Ok(GetVaultRecordResponse {
+            vault_array: vault_record,
+        })
+           
+        
     }
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn reply(_deps: DepsMut, _env: Env, _msg: Reply) -> Result<Response, ContractError> {
     todo!()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use cosmwasm_std::testing::{mock_dependencies, mock_env, mock_info, MOCK_CONTRACT_ADDR};
+    use cosmwasm_std::{attr, coins, CosmosMsg, from_binary};
+
+    #[test]
+    fn greet_query() {
+        let mut deps = mock_dependencies();
+        let info = mock_info("owner", &coins(1000, "earth"));
+        let msg = InstantiateMsg {};
+        let _res = instantiate(deps.as_mut(), mock_env(), info.clone(), msg).unwrap();
+        // assert_eq!(0, res.messages.len());
+
+        let vault_date = VaultData {
+            name: "usdc".to_string(),
+            symbol: "USDC".to_string(),
+            vault_address: "osmo1s3c55jg0scuyls8lr8tjhtxl5qrq0tamjwp6d90vwd0jz6f2jvtqad4ep9".to_string()
+        };
+
+        let msg = ExecuteMsg::RegisterVault(vault_date);
+        let _res = execute(deps.as_mut(), mock_env(), info, msg);
+
+        println!("execute_response: {:?}", _res);
+
+        let msg = QueryMsg::GetVaults {  };
+        let _res = query(deps.as_ref(), mock_env(), msg);
+
+        match _res {
+            Ok(data) => {
+                let value: GetVaultRecordResponse = from_binary(&data).unwrap();
+                println!("value: {:?}", value);
+
+                // match value {
+                //     Ok(response) => {
+                //         println!("vault_array: {:?}", response.vault_array);
+                //     },
+                //     Err(err) => {
+                //         println!("vault_array_err: {:?}", err);
+                //     }
+                // }
+            }, 
+            Err(err) => {
+                println!("err: {:?}", err);
+            }
+        }
+
+        
+
+    }
 }
