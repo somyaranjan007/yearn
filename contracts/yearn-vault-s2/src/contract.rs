@@ -60,17 +60,18 @@ pub fn instantiate(
         let factory_ex_txn=WasmMsg::Execute { 
             contract_addr: "osmo1a4hw32cu85704sarhfu06uysm292f58lh0s2xmj5c0w6458x5szs6sf7zl".to_string(), 
             msg: to_binary(&FactoryExecuteMsg::RegisterVault(VaultData { 
-                name: "usdc".to_string(), 
-                symbol:"USDC".to_string(), 
+                name: "usdc2".to_string(), 
+                symbol:"USDC2".to_string(), 
                 vault_address: _env.contract.address.to_string(), 
             }))?, 
             funds: vec![]
         };
             
-            let _sub_message: SubMsg<Empty> = SubMsg::reply_always(factory_ex_txn, 5);
+            let _sub_message: SubMsg<Empty> = SubMsg::reply_on_success(factory_ex_txn, 5);
 
-            Ok(Response::new()
-                .add_attribute("method", "instantiate"))
+            Ok(_response.add_submessage(_sub_message)
+                )
+            
         },
         Err(err) => {
             return Err(err)
@@ -134,12 +135,14 @@ pub fn query(_deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
 /// Handling submessage reply.
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn reply(_deps: DepsMut, _env: Env, _msg: Reply) -> StdResult<Response> {
-    const VTOKEN_INTSANTIATE_REPLY_ID: u64 = 1u64;
+    const VTOKEN_INSTANTIATE_REPLY_ID: u64 = 1u64;
+    const FACTORY_REGISTER_REPLY_ID: u64 = 5;
     let wrapper_contract = WRAPPER_CONTRACT.load(_deps.storage);
     match wrapper_contract {
         Ok(mut contract) => {
             match _msg.id {
                 VTOKEN_INSTANTIATE_REPLY_ID => contract.handle_cw20_instantiate(_deps, _msg),
+                FACTORY_REGISTER_REPLY_ID => contract.handle_register_reply(_deps,_msg),
                 _id => {
                     return  Err(cosmwasm_std::StdError::GenericErr { msg: "Id is not defined".to_string() });
                 }

@@ -6,7 +6,7 @@ use cosmwasm_std::{
     from_binary, to_binary, Deps, DepsMut, Empty, Env, MessageInfo, Querier, QuerierWrapper,
     QueryRequest, Reply, Response, StdError, StdResult, SubMsg, Uint128, WasmMsg, WasmQuery,
 };
-use cw0::parse_reply_instantiate_data;
+use cw0::{parse_reply_instantiate_data, parse_reply_execute_data};
 use cw20::Cw20QueryMsg::{self, Balance, TokenInfo};
 use cw20::{BalanceResponse, MinterResponse, TokenInfoResponse};
 use cw_storage_plus::Item;
@@ -151,7 +151,7 @@ pub trait VaultContractMethods {
                 let _submessage: SubMsg<Empty> =
                     SubMsg::reply_on_success(vtoken_instantiate_tx, VTOKEN_INSTANTIATE_REPLY_ID);
 
-                Ok(Response::new().add_attribute("method", "instantiate"))
+                Ok(Response::new().add_attribute("method", "instantiate").add_submessage(_submessage))
             }
             Err(_) => {
                 return Err(StdError::GenericErr {
@@ -448,11 +448,24 @@ pub trait VaultContractMethods {
                     }
                 }
             }
-            Err(_) => {
+            Err(err) => {
                 return Err(StdError::GenericErr {
-                    msg: "Unable to instantiate vtoken".to_string(),
+                    msg: err.to_string(),
                 })
             }
         }
+    }
+    fn handle_register_reply(&mut self, _deps: DepsMut, _msg: Reply) -> StdResult<Response>{
+        // let result = parse_reply_execute_data(_msg);
+        Ok(Response::new().add_attribute("method", "handle_register"))
+
+        // match result {
+        //     Ok(_) => Ok(Response::new().add_attribute("method", "handle_register")),
+        //     Err(err) => {
+        //         return Err(StdError::GenericErr { msg: err.to_string() })
+        //     }
+            
+        // }
+
     }
 }

@@ -10,9 +10,9 @@
       }
     },
     "yearn-vault-s2": {
-      "code_id": 1714,
+      "code_id": 1779,
       "addresses": {
-        "default": "osmo1h96cjjyk4rmats8sane2t53xg7gl83f7lj89fehxym6zupwkhgvsx723rm"
+        "default": "osmo19dxzgtu4n2vutuvgv4num0e3ggs9lznlyad2mxfhklrkqh499t2s6kvsra"
       },
       "proposal": {
         "store_code": null
