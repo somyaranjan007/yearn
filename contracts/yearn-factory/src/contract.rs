@@ -152,8 +152,8 @@ pub fn reply(_deps: DepsMut, _env: Env, _msg: Reply) -> Result<Response, Contrac
 #[cfg(test)]
 mod tests {
     use super::*;
-    use cosmwasm_std::testing::{mock_dependencies, mock_env, mock_info, MOCK_CONTRACT_ADDR};
-    use cosmwasm_std::{attr, coins, CosmosMsg, from_binary};
+    use cosmwasm_std::testing::{mock_dependencies, mock_env, mock_info};
+    use cosmwasm_std::{ coins, from_binary};
 
     #[test]
     fn greet_query() {

@@ -20,10 +20,10 @@ pub enum VaultExecuteMsg {
 #[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema, Debug)]
 #[serde(rename_all = "snake_case")]
 pub struct Cw20ReceiveMsg {
-   pub sender: String,
-   pub amount: Uint128,
-   pub msg: Binary,
-}
+    pub sender: String,
+    pub amount: Uint128,
+    pub msg: Binary,
+    }
 
 impl fmt::Display for Cw20ReceiveMsg {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -69,6 +69,12 @@ pub enum QueryMsg {
 
     #[returns(TotalVtokenResponse)]
     TotalSupply {},
+
+    #[returns(SupportedTokenResponse)]
+    SupportedToken {},
+
+    #[returns(VTokenResponse)]
+    Vtoken {},
 }
 
 #[cw_serde] 
@@ -79,4 +85,14 @@ pub struct TotalBalanceResponse {
 #[cw_serde] 
 pub struct TotalVtokenResponse {
     pub total_supply: Uint128
+}
+
+#[cw_serde] 
+pub struct SupportedTokenResponse {
+    pub supported_token: String
+}
+
+#[cw_serde] 
+pub struct VTokenResponse {
+    pub vtoken: String
 }

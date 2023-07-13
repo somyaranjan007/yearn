@@ -1,6 +1,6 @@
 use cosmwasm_schema::{cw_serde, QueryResponses};
 use base_contract::msg::Cw20ReceiveMsg;
-use base_contract::{TotalBalanceResponse, TotalVtokenResponse};
+use base_contract::{TotalBalanceResponse, TotalVtokenResponse, SupportedTokenResponse,VTokenResponse };
 
 /// Message type for `instantiate` entry_point
 #[cw_serde]
@@ -28,6 +28,12 @@ pub enum QueryMsg {
 
     #[returns(TotalVtokenResponse)]
     TotalSupply {},
+
+    #[returns(SupportedTokenResponse)]
+    SupportedToken {},
+
+    #[returns(VTokenResponse)]
+    Vtoken {},
 }
 
 // We define a custom struct for each query response

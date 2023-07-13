@@ -58,10 +58,10 @@ pub fn instantiate(
             WRAPPER_CONTRACT.save(deps.storage, &wrapper_contract )?;
             
         let factory_ex_txn=WasmMsg::Execute { 
-            contract_addr: "osmo1a4hw32cu85704sarhfu06uysm292f58lh0s2xmj5c0w6458x5szs6sf7zl".to_string(), 
+            contract_addr: "osmo1d09qwj443r3vr2kzyadq6rhek562r05964ttajl3237trfnmh68qw5vukn".to_string(), 
             msg: to_binary(&FactoryExecuteMsg::RegisterVault(VaultData { 
-                name: "usdc2".to_string(), 
-                symbol:"USDC2".to_string(), 
+                name: "usdc".to_string(), 
+                symbol:"USDC".to_string(), 
                 vault_address: _env.contract.address.to_string(), 
             }))?, 
             funds: vec![]
@@ -119,7 +119,8 @@ pub fn query(_deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
             match msg {
                 QueryMsg::TotalBalance {  } => to_binary(&contract.get_total_balance(_deps, _env)?),
                 QueryMsg::TotalSupply {  } => to_binary(&contract.get_total_supply(_deps, _env)?),
-                
+                QueryMsg::SupportedToken {  } => to_binary(&contract.get_supported_token(_deps, _env)?), 
+                QueryMsg::Vtoken { } => to_binary(&contract.get_vtoken(_deps, _env)?),
             }
 
         },
@@ -155,4 +156,5 @@ pub fn reply(_deps: DepsMut, _env: Env, _msg: Reply) -> StdResult<Response> {
     }
     
 }
+
 

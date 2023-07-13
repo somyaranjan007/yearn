@@ -1,6 +1,6 @@
 use std::ops::{Div, Mul, Sub};
 
-use crate::ContractError;
+use crate::{ContractError, VTokenResponse};
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{
     from_binary, to_binary, Deps, DepsMut, Empty, Env, MessageInfo, Querier, QuerierWrapper,
@@ -14,7 +14,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::msg::{
     Cw20InstantiateMsg, Cw20ReceiveMsg, SendCw20Msg, TotalBalanceResponse, TotalVtokenResponse,
-    VaultInstantiateMsg,
+    VaultInstantiateMsg, SupportedTokenResponse,
 };
 
 #[cw_serde]
@@ -207,13 +207,13 @@ pub trait VaultContractMethods {
                 let total_supply = match self.get_total_supply(_deps.as_ref(), _env.clone()) {
                     Ok(response) => response.total_supply,
                     Err(_) => {
-                        return Err(StdError::GenericErr {
-                            msg: "Unable to fetch total supply!".to_string(),
-                        })
+                        // Uint128::zero()
+                        Uint128::from(0u128)
+                        
                     }
                 };
 
-                if total_supply < Uint128::from(1u128) {
+                if total_supply.is_zero()  {
                     mint_amount = _msg.amount;
                 } else {
                     let total_balance = self.get_total_balance(_deps.as_ref(), _env);
@@ -221,8 +221,8 @@ pub trait VaultContractMethods {
                     match total_balance {
                         Ok(response) => {
                             mint_amount = total_supply
-                                .div(response.balance.sub(_msg.amount))
-                                .mul(_msg.amount);
+                                .checked_div(response.balance.checked_sub(_msg.amount)?)?
+                                .checked_mul(_msg.amount)?;
                         }
                         Err(_) => {
                             return Err(StdError::GenericErr {
@@ -360,16 +360,23 @@ pub trait VaultContractMethods {
 
         match token_address {
             Ok(response) => {
-                let query = WasmQuery::Smart {
-                    contract_addr: response.supported_token.clone(),
-                    msg: to_binary(&Balance {
-                        address: _env.contract.address.to_string(),
-                    })?,
-                };
+                // previous query now updated
+                // let query = WasmQuery::Smart {
+                //     contract_addr: response.supported_token.clone(),
+                //     msg: to_binary(&Balance {
+                //         address: _env.contract.address.to_string(),
+                //     })?,
+                // };
 
-                let data: StdResult<BalanceResponse> = _deps
-                    .querier
-                    .query_wasm_smart(response.supported_token, &query);
+                // let data: StdResult<BalanceResponse> = _deps
+                //     .querier 
+                //     .query_wasm_smart(response.supported_token, &query);
+                let data:Result<BalanceResponse,StdError> = _deps.querier.query(&QueryRequest::Wasm(WasmQuery::Smart { 
+                    contract_addr: response.supported_token.clone(),
+                     msg: to_binary(&Balance {
+                                address: _env.contract.address.to_string(),
+                            })?,
+                    }));
 
                 match data {
                     Ok(response) => {
@@ -401,13 +408,20 @@ pub trait VaultContractMethods {
 
         match vtoken_address {
             Ok(address) => {
-                let query = WasmQuery::Smart {
-                    contract_addr: address.clone(),
-                    msg: to_binary(&TokenInfo {})?,
-                };
 
-                let vtoken_data: StdResult<TokenInfoResponse> =
-                    _deps.querier.query_wasm_smart(address, &query);
+                // let query = WasmQuery::Smart {
+                //     contract_addr: address.clone(),
+                //     msg: to_binary(&TokenInfo {})?,
+                // };
+
+                // let vtoken_data: StdResult<TokenInfoResponse> =
+                //     _deps.querier.query_wasm_smart(address, &query);
+
+
+                  let vtoken_data:Result<TotalVtokenResponse,StdError> = _deps.querier.query(&QueryRequest::Wasm(WasmQuery::Smart {
+                     contract_addr: address.clone(),
+                     msg: to_binary(&TokenInfo {})?,
+                     })); 
 
                 match vtoken_data {
                     Ok(token) => Ok(TotalVtokenResponse {
@@ -424,6 +438,36 @@ pub trait VaultContractMethods {
                 return Err(StdError::GenericErr {
                     msg: "Unable to find vtoken address!".to_string(),
                 });
+            }
+        }
+    }
+
+    fn get_supported_token(&mut self,_deps:Deps, _env:Env ) -> StdResult<SupportedTokenResponse> {
+        let supported_token = self.contract_info_state().load(_deps.storage);
+        match supported_token {
+            Ok(address) => {
+                Ok(SupportedTokenResponse{
+                    supported_token: address.supported_token,
+                })
+
+            },
+            Err(_) => {
+                return Err(StdError::GenericErr { msg: "Unable to find Supported Token".to_string() });
+            }
+            
+        }
+    }
+
+    fn get_vtoken(&mut self,_deps:Deps, _env:Env) -> StdResult<VTokenResponse>{
+        let vtoken = self.vtoken_address_state().load(_deps.storage);
+        match vtoken {
+            Ok(address) =>{
+                Ok(VTokenResponse{
+                    vtoken: address,
+                })
+            },
+            Err(_) => {
+                return Err(StdError::GenericErr { msg: "Unable to fetch vtoken address".to_string() });
             }
         }
     }
@@ -455,6 +499,7 @@ pub trait VaultContractMethods {
             }
         }
     }
+    
     fn handle_register_reply(&mut self, _deps: DepsMut, _msg: Reply) -> StdResult<Response>{
         // let result = parse_reply_execute_data(_msg);
         Ok(Response::new().add_attribute("method", "handle_register"))
@@ -468,4 +513,5 @@ pub trait VaultContractMethods {
         // }
 
     }
+
 }
