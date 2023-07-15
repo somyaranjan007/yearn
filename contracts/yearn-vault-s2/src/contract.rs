@@ -58,7 +58,7 @@ pub fn instantiate(
             WRAPPER_CONTRACT.save(deps.storage, &wrapper_contract )?;
             
         let factory_ex_txn=WasmMsg::Execute { 
-            contract_addr: "osmo1zplccxs7szxpwk3zxf4l6pzpr25rmf9993xrjshvfg7hy8cduges0xea7x".to_string(), 
+            contract_addr: "osmo186ux5ef9ere664rvv9ck5t6hdz7duwr7qu3qmrhe3sj02hp7h40qu0f5af".to_string(), 
             msg: to_binary(&FactoryExecuteMsg::RegisterVault(VaultData { 
                 name: "usdt".to_string(), 
                 symbol:"USDT".to_string(), 
@@ -69,8 +69,7 @@ pub fn instantiate(
             
             let _sub_message: SubMsg<Empty> = SubMsg::reply_on_success(factory_ex_txn, 5);
 
-            Ok(_response.add_submessage(_sub_message)
-                )
+            Ok(_response.add_submessage(_sub_message))
             
         },
         Err(err) => {
@@ -137,13 +136,20 @@ pub fn query(_deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn reply(_deps: DepsMut, _env: Env, _msg: Reply) -> StdResult<Response> {
     const VTOKEN_INSTANTIATE_REPLY_ID: u64 = 1u64;
-    const FACTORY_REGISTER_REPLY_ID: u64 = 5;
+    const FACTORY_REGISTER_REPLY_ID: u64 = 5u64;
+    const DEPOSIT_MINT_ID: u64 = 2u64;
+    const WITHDRAW_MINT_ID: u64 = 3u64;
+    const BURN_ID: u64 = 7u64;
     let wrapper_contract = WRAPPER_CONTRACT.load(_deps.storage);
     match wrapper_contract {
         Ok(mut contract) => {
             match _msg.id {
                 VTOKEN_INSTANTIATE_REPLY_ID => contract.handle_cw20_instantiate(_deps, _msg),
                 FACTORY_REGISTER_REPLY_ID => contract.handle_register_reply(_deps,_msg),
+                DEPOSIT_MINT_ID => contract.handle_mint_reply(_deps,_msg),
+                WITHDRAW_MINT_ID => contract.handle_withdraw_reply(_deps,_msg),
+                BURN_ID  => contract.handle_burn_reply(_deps, _msg),
+
                 _id => {
                     return  Err(cosmwasm_std::StdError::GenericErr { msg: "Id is not defined".to_string() });
                 }

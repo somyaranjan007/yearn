@@ -1,6 +1,6 @@
 use cosmwasm_std::StdError;
 use thiserror::Error;
-use serde::{de::Error, Serialize, Deserialize, Deserializer, Serializer};
+use serde::{ Serialize, Deserialize, Deserializer, Serializer};
 
 #[derive(Error, Debug)]
 pub enum ContractError {

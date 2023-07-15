@@ -1,12 +1,9 @@
-use base_contract::msg::Cw20InstantiateMsg;
-use base_contract::{VaultContract, VaultContractMethods, ContractInfo};
-use cosmwasm_std::{coin, to_binary, CustomMsg, Empty, Response, SubMsg, Uint128, WasmMsg, StdError, QueryRequest,WasmQuery};
+use base_contract::{ContractInfo, VaultContract, VaultContractMethods};
+use cosmwasm_std::{coin, to_binary, Response, SubMsg, WasmMsg};
 use cw_storage_plus::Item;
 use mars_red_bank_types::red_bank;
-use serde::de::{DeserializeOwned, Deserializer};
+use serde::de::Deserializer;
 use serde::{Deserialize, Serialize, Serializer};
-use cw20::{BalanceResponse, MinterResponse, TokenInfoResponse};
-use cw20::Cw20QueryMsg::{Balance, TokenInfo, self};
 
 pub struct VaultContractWrapper(pub VaultContract);
 
@@ -52,10 +49,7 @@ impl<'de, 'a> Deserialize<'de> for VaultContractWrapper {
     }
 }
 
-
-
 impl<'a> VaultContractMethods for VaultContractWrapper {
-
     fn strategies(
         &self,
         _deps: cosmwasm_std::DepsMut,
@@ -108,9 +102,11 @@ impl<'a> VaultContractMethods for VaultContractWrapper {
     ) -> cosmwasm_std::StdResult<Response> {
         let wrapper_contract = WRAPPER_CONTRACT.load(_deps.storage);
         match wrapper_contract {
-            Ok(contract) => {
+            Ok(_contract) => {
                 let execute_withdraw_tx = WasmMsg::Execute {
-                    contract_addr: "osmo1g30recyv8pfy3qd4qn3dn7plc0rn5z68y5gn32j39e96tjhthzxsw3uvvu".to_string(),
+                    contract_addr:
+                        "osmo1g30recyv8pfy3qd4qn3dn7plc0rn5z68y5gn32j39e96tjhthzxsw3uvvu"
+                            .to_string(),
                     msg: to_binary(&red_bank::ExecuteMsg::Withdraw {
                         denom: "osmo".to_string(),
                         amount: None,
@@ -119,7 +115,8 @@ impl<'a> VaultContractMethods for VaultContractWrapper {
                     funds: vec![],
                 };
                 const EXECUTE_WITHDRAW_ID: u64 = 2u64;
-                let _submessage = SubMsg::reply_on_success(execute_withdraw_tx, EXECUTE_WITHDRAW_ID);
+                let _submessage =
+                    SubMsg::reply_on_success(execute_withdraw_tx, EXECUTE_WITHDRAW_ID);
                 Ok(Response::new()
                     .add_attribute("method", "strategies_withdraw")
                     .add_submessage(_submessage))
@@ -130,34 +127,42 @@ impl<'a> VaultContractMethods for VaultContractWrapper {
                 });
             }
         }
-
-        
     }
-    
-    fn after_deposit(&self, _deps: cosmwasm_std::DepsMut, _env: cosmwasm_std::Env, _info: cosmwasm_std::MessageInfo) -> cosmwasm_std::StdResult<Response>{
+
+    fn after_deposit(
+        &self,
+        _deps: cosmwasm_std::DepsMut,
+        _env: cosmwasm_std::Env,
+        _info: cosmwasm_std::MessageInfo,
+    ) -> cosmwasm_std::StdResult<Response> {
         Ok(Response::new())
     }
 
-    fn before_deposit(&self, _deps: cosmwasm_std::DepsMut, _env: cosmwasm_std::Env, _info: cosmwasm_std::MessageInfo) -> cosmwasm_std::StdResult<Response> {
+    fn before_deposit(
+        &self,
+        _deps: cosmwasm_std::DepsMut,
+        _env: cosmwasm_std::Env,
+        _info: cosmwasm_std::MessageInfo,
+    ) -> cosmwasm_std::StdResult<Response> {
         Ok(Response::new())
-
     }
 
-    fn after_withdraw(&self, _deps: cosmwasm_std::DepsMut, _env: cosmwasm_std::Env, _info: cosmwasm_std::MessageInfo) -> cosmwasm_std::StdResult<Response> {
+    fn after_withdraw(
+        &self,
+        _deps: cosmwasm_std::DepsMut,
+        _env: cosmwasm_std::Env,
+        _info: cosmwasm_std::MessageInfo,
+    ) -> cosmwasm_std::StdResult<Response> {
         Ok(Response::new())
-
     }
 
-    fn contract_info_state( &mut self) -> &mut Item<'static, ContractInfo> {
+    fn contract_info_state(&mut self) -> &mut Item<'static, ContractInfo> {
         &mut self.0.contract_info
     }
 
     fn vtoken_address_state(&mut self) -> &mut Item<'static, String> {
         &mut self.0.vtoken_address
     }
-    
-
-
 }
 
 pub const WRAPPER_CONTRACT: Item<VaultContractWrapper> = Item::new("wrapper_contract");
