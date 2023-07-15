@@ -207,12 +207,12 @@ pub trait VaultContractMethods {
                 let total_supply = match self.get_total_supply(_deps.as_ref(), _env.clone()) {
                     Ok(response) => response.total_supply,
                     Err(_) => {
-                        // Uint128::zero()
                         Uint128::from(0u128)
                         
                     }
                 };
 
+                
                 if total_supply.is_zero()  {
                     mint_amount = _msg.amount;
                 } else {
@@ -221,8 +221,8 @@ pub trait VaultContractMethods {
                     match total_balance {
                         Ok(response) => {
                             mint_amount = total_supply
-                                .checked_div(response.balance.checked_sub(_msg.amount)?)?
-                                .checked_mul(_msg.amount)?;
+                                .div(response.balance.sub(_msg.amount))
+                                .mul(_msg.amount);
                         }
                         Err(_) => {
                             return Err(StdError::GenericErr {

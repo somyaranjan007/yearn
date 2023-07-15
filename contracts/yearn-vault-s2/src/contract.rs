@@ -58,10 +58,10 @@ pub fn instantiate(
             WRAPPER_CONTRACT.save(deps.storage, &wrapper_contract )?;
             
         let factory_ex_txn=WasmMsg::Execute { 
-            contract_addr: "osmo1d09qwj443r3vr2kzyadq6rhek562r05964ttajl3237trfnmh68qw5vukn".to_string(), 
+            contract_addr: "osmo1zplccxs7szxpwk3zxf4l6pzpr25rmf9993xrjshvfg7hy8cduges0xea7x".to_string(), 
             msg: to_binary(&FactoryExecuteMsg::RegisterVault(VaultData { 
-                name: "usdc".to_string(), 
-                symbol:"USDC".to_string(), 
+                name: "usdt".to_string(), 
+                symbol:"USDT".to_string(), 
                 vault_address: _env.contract.address.to_string(), 
             }))?, 
             funds: vec![]

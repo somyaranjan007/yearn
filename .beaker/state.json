@@ -1,18 +1,18 @@
 {
   "testnet": {
     "yearn-factory": {
-      "code_id": 1863,
+      "code_id": 1869,
       "addresses": {
-        "default": "osmo1d09qwj443r3vr2kzyadq6rhek562r05964ttajl3237trfnmh68qw5vukn"
+        "default": "osmo1zplccxs7szxpwk3zxf4l6pzpr25rmf9993xrjshvfg7hy8cduges0xea7x"
       },
       "proposal": {
         "store_code": null
       }
     },
     "yearn-vault-s2": {
-      "code_id": 1864,
+      "code_id": 1870,
       "addresses": {
-        "default": "osmo1mk3ptxpkfxu60c5fgu5l42usfzqcq68xmq8z93umgglf7gshc8dqhd595v"
+        "default": "osmo1nq6zxhyptvwvukcy3favtemnv8gqudk3frmwyvxw6c5tr4gde4ssmevxru"
       },
       "proposal": {
         "store_code": null
